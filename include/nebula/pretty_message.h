@@ -1,0 +1,42 @@
+/*
+ * pretty_message.h
+ *
+ *  Created on: Dec 10, 2011
+ *  Author:     Brian Y. ZHANG
+ *  Email:      brianlions at gmail dot com
+ */
+
+#ifndef _BrianZ_NEBULA_PRETTY_MESSAGE_H_
+#define _BrianZ_NEBULA_PRETTY_MESSAGE_H_
+
+#include <stdio.h>
+#include "nebula/time.h"
+
+#if defined(USE_PRETTY_MESSAGE)
+#define PRETTY_MESSAGE(stream, fmt, ...) \
+do { \
+    char time_str[64]; \
+    (void) fprintf((stream), "[%s %s:%d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
+      __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__); \
+} while (0)
+#define DEV_MESSAGE(fmt, ...) \
+do { \
+    char time_str[64]; \
+    (void) fprintf(stderr, "[%s %s:%d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
+      __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__); \
+} while (0)
+#if 0
+#define BEGIN_FUNC() do { fprintf(stderr, "+++++ %s:%d:%s +++\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
+#define END_FUNC()   do { fprintf(stderr, "----- %s:%d:%s ---\n", __FILE__, __LINE__, __FUNCTION__); } while (0)
+#else
+#define BEGIN_FUNC() PRETTY_MESSAGE(stderr, "entering ...")
+#define END_FUNC()   PRETTY_MESSAGE(stderr, "leaving ...")
+#endif
+#else //---------------------------------------------------------------------------------------------------------------
+#define PRETTY_MESSAGE(stream, fmt, ...)
+#define DEV_MESSAGE(fmt, ...)
+#define BEGIN_FUNC()
+#define END_FUNC()
+#endif
+
+#endif /* _BrianZ_NEBULA_PRETTY_MESSAGE_H_ */
