@@ -42,6 +42,12 @@ namespace nebula
     static size_t strlcpy(char * dst, const char * src, size_t siz);
     static int64_t strToI64(const char * s, bool parse_suffix = false);
     static uint64_t strToU64(const char * s, bool parse_suffix = false);
+
+    // TODO
+    static bool startsWith(const char * src_str, const char * prefix);
+    static bool endsWith(const char * src_str, const char * suffix);
+    static char * toUpperCase(char * input);
+    static char * toLowerCase(char * input);
   };
 }
 
