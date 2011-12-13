@@ -92,7 +92,7 @@ TEST_F(AsyncEventTS, caseOneShotTimeEvent)
   DEV_MESSAGE("this test should finish in %d msec ...", ms_left);
   EXPECT_EQ(0, ae->addTimeEvent(ms_left, oneShotTmEvtCb, &time_event_id, &time_event_id));
   ae->eventLoop();
-  EXPECT_EQ(1, ae->lastTimeEventId());
+  EXPECT_EQ((uint64_t) 1, ae->lastTimeEventId());
   DEV_MESSAGE("test finished");
 }
 
@@ -135,7 +135,7 @@ TEST_F(AsyncEventTS, caseMultiShotTimeEvent)
   DEV_MESSAGE("this test should finish in %d msec ...", spec.interval_ms * spec.max_iterations);
   EXPECT_EQ(0, ae->addTimeEvent(spec.interval_ms, multiShotTmEvtCb, &spec, &(spec.time_event_id)));
   ae->eventLoop();
-  EXPECT_EQ(1, ae->lastTimeEventId());
+  EXPECT_EQ((uint64_t) 1, ae->lastTimeEventId());
   EXPECT_EQ(spec.num_iterations, spec.max_iterations);
   DEV_MESSAGE("test finished");
 }

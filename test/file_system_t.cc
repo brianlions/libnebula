@@ -1,7 +1,7 @@
 /*
- * p_message.cc
+ * file_system_t.cc
  *
- *  Created on: Dec 10, 2011
+ *  Created on: Dec 13, 2011
  *  Author:     Brian Y. ZHANG
  *  Email:      brianlions at gmail dot com
  */
@@ -23,22 +23,38 @@
  * You should have received a copy of the GNU General Public License
  * along with libnebula.  If not, see <http://www.gnu.org/licenses/>.
  */
+#include <stdio.h>
+#include <iostream>
+#include <gtest/gtest.h>
+#include "nebula/file_system.h"
 
-#ifndef USE_PRETTY_MESSAGE
-#define USE_PRETTY_MESSAGE
-#endif
-#include <stdlib.h>
-#include "nebula/pretty_message.h"
+using nebula::FileSystem;
 
-void foo()
+class FileSystemTS: public testing::Test
 {
-  BEGIN_FUNC();
+protected:
+  virtual void SetUp()
+  {
 
-  END_FUNC();
+  }
+
+  virtual void TearDown()
+  {
+
+  }
+};
+
+int printItemName(const char * path, const struct stat * sb, void * arg)
+{
+  std::cout << "\t" << path << (S_ISDIR(sb->st_mode) ? "/" : (S_ISLNK(sb->st_mode) ? "@" : "")) << std::endl;
+  return 0;
 }
 
-int main(int argc, char ** argv)
+TEST_F(FileSystemTS, caseListHomeAndRoot)
 {
-  foo();
-  exit(0);
+  std::cout << "contents of /home:" << std::endl;
+  FileSystem::fileTreeTraversal("/home", printItemName, NULL);
+  std::cout << std::endl;
+  std::cout << "contents of /:" << std::endl;
+  FileSystem::fileTreeTraversal("/", printItemName, NULL);
 }
