@@ -27,7 +27,7 @@ namespace nebula
     static int mkdir(const char * pathname, bool recursive = false, const char * mode = "rwxr-xr-x");
     static int rmdir(const char * pathname, bool recursive = false);
 
-    static int stat(const char * path, struct stat * buf, bool follow_link = false)
+    static int getFileStatus(const char * path, struct stat * buf, bool follow_link = false)
     {
       if ((follow_link && stat(path, &buf) < 0) || lstat(path, &buf) < 0) {
         return -1;
