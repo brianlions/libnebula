@@ -95,4 +95,40 @@ namespace nebula
     }
     return (uint64_t) val;
   }
+
+  bool String::startsWith(const char * src_str, const char * prefix)
+  {
+    size_t la, lb;
+    if ((la = strlen(src_str)) < (lb = strlen(prefix))) {
+      return false;
+    }
+    return strncmp(src_str, prefix, lb) == 0;
+  }
+
+  bool String::endsWith(const char * src_str, const char * suffix)
+  {
+    size_t la, lb;
+    if ((la = strlen(src_str)) < (lb = strlen(suffix))) {
+      return false;
+    }
+    return strncmp(src_str + la - lb, suffix, lb) == 0;
+  }
+
+  char * String::toUpperCase(char * input)
+  {
+    size_t len = strlen(input);
+    for (size_t i = 0; i < len; ++i) {
+      input[i] = toupper(input[i]);
+    }
+    return input;
+  }
+
+  char * String::toLowerCase(char * input)
+  {
+    size_t len = strlen(input);
+    for (size_t i = 0; i < len; ++i) {
+      input[i] = tolower(input[i]);
+    }
+    return input;
+  }
 }

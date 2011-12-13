@@ -28,6 +28,7 @@
 #define _BrianZ_NEBULA_STRING__H_
 
 #include <sys/types.h>
+#include <ctype.h>
 #include <stdint.h>
 #include <stdlib.h>
 #include <string.h>
@@ -43,7 +44,6 @@ namespace nebula
     static int64_t strToI64(const char * s, bool parse_suffix = false);
     static uint64_t strToU64(const char * s, bool parse_suffix = false);
 
-    // TODO
     static bool startsWith(const char * src_str, const char * prefix);
     static bool endsWith(const char * src_str, const char * suffix);
     static char * toUpperCase(char * input);
