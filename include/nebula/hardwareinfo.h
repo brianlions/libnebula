@@ -38,8 +38,12 @@ namespace nebula
   class HardwareInfo
   {
   private:
+#if 0
     static pthread_mutex_t lock_;
     static int done_;
+#else
+    static pthread_once_t parsed_;
+#endif
 
     static char cpu_model_name_[1024];
     static uint64_t num_of_processors_;
@@ -56,31 +60,31 @@ namespace nebula
   public:
     static const char * cpuModelName()
     {
-      checkAndParse();
+      (void) pthread_once(&parsed_, checkAndParse);
       return cpu_model_name_;
     }
 
     static uint64_t numOfProcessors()
     {
-      checkAndParse();
+      (void) pthread_once(&parsed_, checkAndParse);
       return num_of_processors_;
     }
 
     static uint64_t cpuCacheSize()
     {
-      checkAndParse();
+      (void) pthread_once(&parsed_, checkAndParse);
       return cpu_cache_size_;
     }
 
     static uint64_t memoryTotal()
     {
-      checkAndParse();
+      (void) pthread_once(&parsed_, checkAndParse);
       return memory_total_;
     }
 
     static uint64_t swapTotal()
     {
-      checkAndParse();
+      (void) pthread_once(&parsed_, checkAndParse);
       return swap_total_;
     }
   };

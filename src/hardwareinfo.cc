@@ -28,8 +28,12 @@
 
 namespace nebula
 {
+#if 0
   pthread_mutex_t HardwareInfo::lock_ = PTHREAD_MUTEX_INITIALIZER;
   int HardwareInfo::done_ = 0;
+#else
+  pthread_once_t HardwareInfo::parsed_ = PTHREAD_ONCE_INIT;
+#endif
 
   char HardwareInfo::cpu_model_name_[1024];
   uint64_t HardwareInfo::num_of_processors_ = 0;
@@ -139,6 +143,7 @@ namespace nebula
 
   void HardwareInfo::checkAndParse()
   {
+#if 0
     if (!done_) {
       pthread_mutex_lock(&lock_);
       if (!done_) {
@@ -148,5 +153,9 @@ namespace nebula
       }
       pthread_mutex_unlock(&lock_);
     }
+#else
+    String::strlcpy(cpu_model_name_, "unknown", sizeof(cpu_model_name_));
+    parseProcFiles();
+#endif
   }
 }
