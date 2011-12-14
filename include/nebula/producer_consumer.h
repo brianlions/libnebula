@@ -5,12 +5,32 @@
  *  Author:     Brian Y. ZHANG
  *  Email:      brianzhang at gmail dot com
  */
+/*
+ * Copyright (c) 2011 Brian Yi ZHANG <brianlions at gmail dot com>
+ *
+ * This file is part of libnebula.
+ *
+ * libnebula is free software: you can redistribute it and/or modify
+ * it under the terms of the GNU General Public License as published by
+ * the Free Software Foundation, either version 3 of the License, or
+ * (at your option) any later version.
+ *
+ * libnebula is distributed in the hope that it will be useful,
+ * but WITHOUT ANY WARRANTY; without even the implied warranty of
+ * MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ * GNU General Public License for more details.
+ *
+ * You should have received a copy of the GNU General Public License
+ * along with libnebula.  If not, see <http://www.gnu.org/licenses/>.
+ */
 
 #ifndef _BrianZ_NEBULA_PRODUCER_CONSUMER_H_
 #define _BrianZ_NEBULA_PRODUCER_CONSUMER_H_
 
 #include <pthread.h>
 #include <list>
+#include <sstream>
+#include "nebula/attributes.h"
 #include "nebula/thread.h"
 
 namespace nebula
@@ -24,23 +44,26 @@ namespace nebula
       {
         enum Constants
         {
-          NOT_AVAILABLE = 0, OK = 1, FAILED = 2, ABORTED = 3
+          NOT_AVAILABLE = 0, SUCCESS = 1, FAILED = 2, ABORTED = 3, CANCELLED = 4
         };
 
-        const char * toString(Constants v)
+        static const char * toString(Constants v)
         {
           switch (v) {
             case NOT_AVAILABLE:
               return "NOT_AVAILABLE";
               break;
-            case OK:
-              return "OK";
+            case SUCCESS:
+              return "SUCCESS";
               break;
             case FAILED:
               return "FAILED";
               break;
             case ABORTED:
               return "ABORTED";
+              break;
+            case CANCELLED:
+              return "CANCELLED";
               break;
             default:
               return "<unknown>";
@@ -64,41 +87,48 @@ namespace nebula
 
       }
 
-      virtual Result::Constants process() = 0;
+      Result::Constants getResult() const
+      {
+        return result_;
+      }
+
+      const char * getResultStr() const
+      {
+        return Result::toString(result_);
+      }
 
       void execute()
       {
         switch (process()) {
-          case Result::OK:
-            result_ = Result::OK;
-            reportSuccess();
+          case Result::NOT_AVAILABLE:
+            result_ = Result::NOT_AVAILABLE;
+            reportResult(result_);
+          case Result::SUCCESS:
+            result_ = Result::SUCCESS;
+            reportResult(result_);
             break;
           case Result::FAILED:
             result_ = Result::FAILED;
-            reportFailure();
+            reportResult(result_);
             break;
           case Result::ABORTED:
             result_ = Result::ABORTED;
-            reportAbortion();
+            reportResult(result_);
             break;
+          case Result::CANCELLED:
+            result_ = Result::CANCELLED;
+            reportResult(result_);
           default:
             // TODO
             break;
         }
       }
 
-      // override following method if necessary
-      virtual void reportSuccess()
-      {
-        // empty
-      }
+      // implement this method in subclasses to handle this tasklet
+      virtual Result::Constants process() = 0;
 
-      virtual void reportFailure()
-      {
-        // empty
-      }
-
-      virtual void reportAbortion()
+      // override this method in subclasses if necessary
+      virtual void reportResult(Result::Constants rc)
       {
         // empty
       }
@@ -106,7 +136,7 @@ namespace nebula
       virtual std::string toString() const
       {
         std::stringstream ss;
-        ss << "Tasklet{}";
+        ss << "Tasklet{result_:" << Result::toString(result_) << "}";
         return ss.str();
       }
     }; /* class Tasklet */
@@ -130,6 +160,7 @@ namespace nebula
         while (!items_.empty()) {
           t = items_.front();
           items_.pop_front();
+          t->reportResult(Tasklet::Result::CANCELLED);
           delete t;
         }
         pthread_mutex_unlock(&lock_);
@@ -172,14 +203,48 @@ namespace nebula
       }
     }; /* class Queue */
 
-    class Consumer: public Thread
+    namespace internal
+    {
+      class ProdConsThread: public Thread
+      {
+      protected:
+        Queue * tasklet_queue_;
+
+      public:
+        ProdConsThread(Queue * q = NULL) :
+          tasklet_queue_(q)
+        {
+          attachToQueue(q);
+        }
+
+        virtual ~ProdConsThread()
+        {
+
+        }
+
+        void attachToQueue(Queue * q)
+        {
+          tasklet_queue_ = q;
+        }
+
+        void detachFromQueue()
+        {
+          tasklet_queue_ = NULL;
+        }
+      }; /* class ProdConsThread */
+    } /* namespace internal */
+
+    class Consumer: public internal::ProdConsThread
     {
     private:
-      Queue * tasklet_queue_;
+      Tasklet * fetchOneTasklet()
+      {
+        return tasklet_queue_ ? tasklet_queue_->popTasklet() : NULL;
+      }
 
     public:
       Consumer(Queue * q = NULL) :
-        tasklet_queue_(NULL)
+        ProdConsThread(q)
       {
         attachToQueue(q);
       }
@@ -189,43 +254,75 @@ namespace nebula
 
       }
 
-      void attachToQueue(Queue * q)
-      {
-        tasklet_queue_ = q;
-      }
-
-      void detathFromQueue()
-      {
-        tasklet_queue_ = NULL;
-      }
-
-    protected:
-      Tasklet * fetchOneTasklet()
-      {
-        return tasklet_queue_ ? tasklet_queue_->popTasklet() : NULL;
-      }
-
+      /*
+       * Description:
+       *   called before Tasklet `t' is execute()ed
+       */
       virtual void prepareBeforeExecute(Tasklet * t)
       {
 
       }
 
+      /*
+       * Description:
+       *   called after Tasklet `t' is execute()ed
+       */
       virtual void cleanupAfterExecute(Tasklet * t)
       {
 
       }
 
-      void executeUntilQueueIsEmpty()
+      /*
+       * Description:
+       *   Fetch tasklet from the attached queue, then execute.  Execute at most
+       *   `max' tasklets if `max' is positive, or else fetch/execute until the
+       *   queue is empty.
+       * Return value:
+       *   Number of tasklets fetched and executed.
+       */
+      size_t fetchTaskletAndExecute(size_t max = 0)
       {
+        size_t count = 0;
         Tasklet * t = NULL;
-        while (tasklet_queue_ && (t = tasklet_queue_->popTasklet())) {
+        while ((max ? (count < max) : 1) && (t = fetchOneTasklet())) {
           prepareBeforeExecute(t);
           t->execute();
+          ++count;
           cleanupAfterExecute(t);
           delete t;
         }
+        return count;
       }
-    };
+
+      // override this method in subclasses if necessary
+      virtual void * routine()
+      {
+        size_t executed UNUSED = fetchTaskletAndExecute();
+        return NULL;
+      }
+    }; /* class Consumer */
+
+    class Producer: public internal::ProdConsThread
+    {
+    private:
+
+    public:
+      Producer(Queue * q) :
+        ProdConsThread(q)
+      {
+
+      }
+
+      virtual ~Producer()
+      {
+
+      }
+
+      virtual void * routine()
+      {
+        return NULL;
+      }
+    }; /* class Producer */
 
   } /* namespace ProducerAndConsumer */
 }

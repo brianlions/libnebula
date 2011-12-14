@@ -56,23 +56,56 @@ namespace nebula
       }
     }
 
+    /*
+     * Description:
+     *   This is the start routine of `this' thread.
+     * Return value:
+     *   The return value is the exit status of `this' thread.
+     */
     virtual void * routine() = 0;
 
+    /*
+     * Description:
+     *   Start a new thread.
+     */
     int create()
     {
       return pthread_create(&thread_id_, &thread_attr_, privateStartRoutine, this);
     }
 
+    /*
+     * Description:
+     *   Waits for thread `this' to terminate, exit status of thread `this'
+     *   will be copied into `*retval'.  If thread `this' was canceled, then
+     *   PTHREAD_CANCELED is placed into `*retval'.
+     */
     int join(void ** retval = NULL)
     {
       return pthread_join(thread_id_, retval);
     }
 
+    /*
+     * Description:
+     *   Send a cancellation request to `this' thread.
+     */
+    int cancel()
+    {
+      return pthread_cancel(thread_id_);
+    }
+
+    /*
+     * Description:
+     *   Obtain ID of `this' thread.
+     */
     pthread_t self() const
     {
       return thread_id_;
     }
 
+    /*
+     * Description:
+     *   Send a signal to `this' thread.
+     */
     int kill(int sig = 0)
     {
       return pthread_kill(thread_id_, sig);
