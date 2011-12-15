@@ -44,6 +44,13 @@ MY_EXE  =
 MY_AR   =
 endif
 
+ifdef PRETTY_MESSAGE
+CFLAGS       += -D USE_PRETTY_MESSAGE
+CXXFLAGS     += -D USE_PRETTY_MESSAGE
+CFLAGS_DBG   += -D USE_PRETTY_MESSAGE
+CXXFLAGS_DBG += -D USE_PRETTY_MESSAGE
+endif
+
 comp.cxx      = $(MY_OBJ) $(CXX) $(CXXFLAGS) $(addprefix -I ,$(include_paths)) -c -o $(1) $(2)
 comp_dbg.cxx  = $(MY_OBJ) $(CXX) $(CXXFLAGS_DBG) $(addprefix -I ,$(include_paths)) -c -o $(1) $(2)
 dep.cxx       = $(MY_DEP) $(CXX) $(CXXFLAGS) $(addprefix -I ,$(include_paths)) -MM -MF $(1) -MT $(basename $(1)).o $(2)

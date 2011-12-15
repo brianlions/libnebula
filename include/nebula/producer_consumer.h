@@ -236,8 +236,8 @@ namespace nebula
 
     class Consumer: public internal::ProdConsThread
     {
-    private:
-      Tasklet * fetchOneTasklet()
+    protected:
+      Tasklet * fetchNextTasklet()
       {
         return tasklet_queue_ ? tasklet_queue_->popTasklet() : NULL;
       }
@@ -267,29 +267,30 @@ namespace nebula
        * Description:
        *   called after Tasklet `t' is execute()ed
        */
-      virtual void cleanupAfterExecute(Tasklet * t)
+      virtual void cleanupAfterExecute(Tasklet * t, bool delete_it)
       {
-
+        if (delete_it) {
+          delete t;
+        }
       }
 
       /*
        * Description:
        *   Fetch tasklet from the attached queue, then execute.  Execute at most
-       *   `max' tasklets if `max' is positive, or else fetch/execute until the
-       *   queue is empty.
+       *   `limit' tasklets if `limit' is positive, or else fetch/execute until
+       *   the queue is empty.
        * Return value:
        *   Number of tasklets fetched and executed.
        */
-      size_t fetchTaskletAndExecute(size_t max = 0)
+      size_t fetchTaskletAndExecute(size_t limit = 0)
       {
         size_t count = 0;
         Tasklet * t = NULL;
-        while ((max ? (count < max) : 1) && (t = fetchOneTasklet())) {
+        while ((limit ? (count < limit) : 1) && (t = fetchNextTasklet())) {
           prepareBeforeExecute(t);
           t->execute();
           ++count;
-          cleanupAfterExecute(t);
-          delete t;
+          cleanupAfterExecute(t, true);
         }
         return count;
       }
@@ -297,14 +298,24 @@ namespace nebula
       // override this method in subclasses if necessary
       virtual void * routine()
       {
-        size_t executed UNUSED = fetchTaskletAndExecute();
+        while (getStopFlag()) {
+          size_t executed UNUSED = fetchTaskletAndExecute();
+        }
         return NULL;
       }
     }; /* class Consumer */
 
     class Producer: public internal::ProdConsThread
     {
-    private:
+    protected:
+      bool dispatchTasklet(Tasklet * t)
+      {
+        if (!tasklet_queue_) {
+          return false;
+        }
+        tasklet_queue_->pushTasklet(t);
+        return true;
+      }
 
     public:
       Producer(Queue * q) :
@@ -318,8 +329,57 @@ namespace nebula
 
       }
 
+      /*
+       * Description:
+       *   Called before `t' is pushed into the queue.
+       */
+      virtual void prepareBeforeDispatch(Tasklet * t)
+      {
+
+      }
+
+      /*
+       * Description:
+       *   Called if failed pushing `t' into the queue.
+       */
+      virtual void cleanupAfterDispatchFailure(Tasklet * t, bool delete_tasklet)
+      {
+        if (delete_tasklet) {
+          delete t;
+        }
+      }
+
+      /*
+       * Description:
+       *   Generate tasklet and push into the attached queue.  Generate at most
+       *   `limit' tasklet if `limit' is positive, or else until not more
+       *   tasklet is available.
+       * Return value:
+       *   Number of tasklets generated, including those not pushed into the
+       *   attached queue.
+       */
+      size_t generateTaskletAndDispatch(size_t limit = 0)
+      {
+        size_t count = 0;
+        Tasklet * t = NULL;
+        while ((limit ? (count < limit) : 1) && (t = generateNextTasklet())) {
+          ++count;
+          prepareBeforeDispatch(t);
+          if (!dispatchTasklet(t)) {
+            cleanupAfterDispatchFailure(t, true);
+          }
+        }
+        return count;
+      }
+
+      virtual Tasklet * generateNextTasklet() = 0;
+
+      // override this method in subclasses if necessary
       virtual void * routine()
       {
+        while (!getStopFlag()) {
+          size_t generated UNUSED = generateTaskletAndDispatch();
+        }
         return NULL;
       }
     }; /* class Producer */

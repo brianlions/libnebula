@@ -554,7 +554,7 @@ public:
 
     DEV_MESSAGE("client internal stat: idStopping()=%d,min_write_=%lu,sockfd_=%d,nread_=%lu,nwrite_=%lu,"
         "check_interval_ms_=%u,max_check_=%u,num_check_=%u",
-        me->isStopping(), me->min_write_, me->sockfd_, me->nread_, me->nwrite_,
+        me->getStopFlag(), me->min_write_, me->sockfd_, me->nread_, me->nwrite_,
         me->check_interval_ms_, me->max_check_, me->num_check_);
 
     if (me->getStopFlag()) {
