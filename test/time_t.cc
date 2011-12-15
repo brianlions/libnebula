@@ -46,6 +46,14 @@ protected:
   }
 };
 
+TEST_F(TSTime, caseFormatDataTime)
+{
+  time_t t = 0;
+  char buf[128];
+  std::cout << "epoch: " << Time::formatDataTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX", &t) << std::endl;
+  std::cout << "now:   " << Time::formatDataTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX") << std::endl;
+}
+
 TEST_F(TSTime, caseTimestampStr)
 {
   char buf[128];

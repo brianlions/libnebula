@@ -32,12 +32,27 @@
 #include <time.h>
 #include <stdint.h>
 #include <stdio.h>
+#include "nebula/attributes.h"
 
 namespace nebula
 {
   class Time
   {
   public:
+    static char * formatDataTime(char * buf, size_t buflen, const char * format, const time_t * pt = NULL,
+      bool utc = false) STRFTIME_FORMAT(3)
+    {
+      struct tm broken_down;
+      time_t now;
+      if (!pt) {
+        time(&now);
+        pt = &now;
+      }
+      utc ? gmtime_r(pt, &broken_down) : localtime_r(pt, &broken_down);
+      strftime(buf, buflen, format, &broken_down);
+      return buf;
+    }
+
     static char * fromTimestamp(char * buf, size_t buflen, const time_t * pt = NULL, bool utc = false)
     {
       struct tm broken_down;

@@ -38,8 +38,10 @@
 #ifdef __GNUC__
 #define PRINTF_FORMAT(M, N)       __attribute__((format(printf, (M), (N))))
 #define SCANF_FORMAT(M, N)        __attribute__((format(scanf, (M), (N))))
+#define STRFTIME_FORMAT(M)        __attribute__((format(strftime, (M), 0)))
 #define CLASS_PRINTF_FORMAT(M, N) __attribute__((format(printf, (M + 1), (N + 1))))
 #define CLASS_SCANF_FORMAT(M, N)  __attribute__((format(scanf, (M + 1), (N + 1))))
+#define CLASS_STRFTIME_FORMAT(M)  __attribute__((format(strftime, (M + 1), 0)))
 #define INLINE                    __inline__
 #define ALWAYS_INLINE             __attribute__((always_inline))
 #define WARN_UNUSED_RESULT        __attribute__((warn_unused_result))
@@ -48,8 +50,10 @@
 #else
 #define PRINTF_FORMAT(M, N)
 #define SCANF_FORMAT(M, N)
+#define STRFTIME_FORMAT(M)
 #define CLASS_PRINTF_FORMAT(M, N)
 #define CLASS_SCANF_FORMAT(M, N)
+#define CLASS_STRFTIME_FORMAT(M)
 #define INLINE
 #define ALWAYS_INLINE
 #define WARN_UNUSED_RESULT
