@@ -39,10 +39,12 @@ private:
   int orig_;
   int var_;
   volatile int * sum_;
+
 public:
   MyTasklet(int v = 0, volatile int * sum = NULL) :
     orig_(0), var_(v), sum_(sum)
   {
+
   }
 
   virtual Result::Constants process()
@@ -59,7 +61,10 @@ public:
   virtual std::string toString() const
   {
     std::stringstream ss;
-    ss << "MyTasklet{var_:" << var_ << ",orig_:" << orig_ << ",sum_:" << ((void *) sum_) << "," << Tasklet::toString()
+    ss << "MyTasklet{var_:" << var_ //
+        << ",orig_:" << orig_ //
+        << ",sum_:" << ((void *) sum_) //
+        << "," << Tasklet::toString() //
         << "}";
     return ss.str();
   }
@@ -71,6 +76,7 @@ static const unsigned int LOOP_INTERVAL_MS = 100;
 static const unsigned int TIMECOST_OF_PRODUCE = 50;
 static volatile int sum = 0;
 static volatile int num_of_active_producers = 0;
+static volatile int producer_is_ready = 0;
 
 static int getNumOfActiveProducers()
 {
@@ -87,6 +93,16 @@ static int decrNumOfActiveProducers()
   return __sync_sub_and_fetch(&num_of_active_producers, 1);
 }
 
+static void setProducerReadyFlag()
+{
+  __sync_val_compare_and_swap(&producer_is_ready, 0, 1);
+}
+
+static bool producerIsReady()
+{
+  return __sync_fetch_and_add(&producer_is_ready, 0) > 0;
+}
+
 class MyProducer: public MyAliasProdCons::Producer
 {
 private:
@@ -96,7 +112,9 @@ public:
   MyProducer(MyAliasProdCons::Queue * q = NULL, size_t limit = 0) :
     Producer(q), limit_(limit), count_(0)
   {
+
   }
+
   virtual MyAliasProdCons::Tasklet * generateNextTasklet()
   {
     if (count_ < limit_) {
@@ -109,6 +127,18 @@ public:
       return NULL;
     }
   }
+
+  virtual void startHandler()
+  {
+    setProducerReadyFlag();
+    DEV_MESSAGE("producer 0x%016lx: i'm ready", self());
+  }
+
+  virtual void exitHandler()
+  {
+    DEV_MESSAGE("producer 0x%016lx: terminating ...", self());
+  }
+
   virtual void * routine()
   {
     incrNumOfActiveProducers();
@@ -130,16 +160,33 @@ public:
   MyConsumer(MyAliasProdCons::Queue * q = NULL) :
     Consumer(q)
   {
+
   }
+
+  virtual void startHandler()
+  {
+    while (!producerIsReady()) {
+      nebula::Time::msSleep(LOOP_INTERVAL_MS);
+    }
+    DEV_MESSAGE("consumer 0x%016lx: producer is ready", self());
+  }
+
+  virtual void exitHandler()
+  {
+    DEV_MESSAGE("consumer 0x%016lx: terminating ...", self());
+  }
+
   virtual void prepareBeforeExecute(MyAliasProdCons::Tasklet * t)
   {
     DEV_MESSAGE("%s", t->toString().c_str());
   }
+
   virtual void cleanupAfterExecute(MyAliasProdCons::Tasklet * t, bool delete_it)
   {
     DEV_MESSAGE("%s", t->toString().c_str());
     MyAliasProdCons::Consumer::cleanupAfterExecute(t, delete_it);
   }
+
   virtual void * routine()
   {
     DEV_MESSAGE("consumer 0x%016lu started ...", self());
@@ -157,7 +204,6 @@ public:
 TEST(ProducerAndConsumerTS, casePoc)
 {
   MyAliasProdCons::Queue shared_queue;
-
   std::cout << "this test case will finish in " << (MAX_VALUE * TIMECOST_OF_PRODUCE) << " msec" << std::endl;
 
   MyProducer producer(&shared_queue, MAX_VALUE);
@@ -181,4 +227,5 @@ TEST(ProducerAndConsumerTS, casePoc)
   }
 
   EXPECT_EQ(sum, (1 + MAX_VALUE) * MAX_VALUE / 2);
+  EXPECT_EQ(0, num_of_active_producers);
 }

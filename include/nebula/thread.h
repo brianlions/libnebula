@@ -58,6 +58,24 @@ namespace nebula
 
     /*
      * Description:
+     *  Start handler of `this' thread, called immediately after `this' thread is created.
+     */
+    virtual void startHandler()
+    {
+
+    }
+
+    /*
+     * Description:
+     *   Exit handler of `this' thread, called before `this' thread's termination.
+     */
+    virtual void exitHandler()
+    {
+
+    }
+
+    /*
+     * Description:
      *   This is the start routine of `this' thread.
      * Return value:
      *   The return value is the exit status of `this' thread.
@@ -128,10 +146,26 @@ namespace nebula
       return __sync_fetch_and_add(&stop_, 0);
     }
 
+  protected:
+    /*
+     * Template method of thread
+     */
+    void * startRoutine()
+    {
+      startHandler();
+      void * result = routine();
+      exitHandler();
+      return result;
+    }
+
   private:
     static void * privateStartRoutine(void * self)
     {
+#if 0
       return reinterpret_cast<Thread*> (self)->routine();
+#else
+      return reinterpret_cast<Thread*> (self)->startRoutine();
+#endif
     }
   }; /* class Thread */
 }
