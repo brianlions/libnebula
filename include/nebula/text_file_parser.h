@@ -123,6 +123,89 @@ namespace nebula
     }
   }; /* class Tokens */
 
+  class TextFileParser: Standard::NoCopy
+  {
+  private:
+    enum
+    {
+      DEFAULT_LINE_SIZE = 4096
+    };
+
+    char * line_buffer_;
+    size_t line_size_;
+    FILE * file_handle_;
+
+  public:
+    TextFileParser() :
+      line_buffer_(NULL), line_size_(0), file_handle_(NULL)
+    {
+
+    }
+
+    ~TextFileParser()
+    {
+      clear();
+    }
+
+    void clear()
+    {
+      if (line_buffer_) {
+        free(line_buffer_);
+        line_buffer_ = NULL;
+      }
+      if (line_size_) {
+        line_size_ = 0;
+      }
+      if (file_handle_) {
+        fclose(file_handle_);
+        file_handle_ = NULL;
+      }
+    }
+
+    int parseLineByLine(const char * filename,
+      int(*fn)(const char * filename, uint64_t line_num, const Tokens * tokens, void * arg), void * fn_arg = NULL,
+      const char * delim = " \f\n\r\t\v", bool skip_empty = true, uint32_t hint_size = Tokens::DEFAULT_HINT_SIZE)
+    {
+      if (file_handle_) {
+        fclose(file_handle_);
+        file_handle_ = NULL;
+      }
+
+      if (!line_buffer_ && (line_buffer_ = (char *) malloc(DEFAULT_LINE_SIZE)) == NULL) {
+        return -1;
+      }
+      line_size_ = DEFAULT_LINE_SIZE;
+      if (!(file_handle_ = fopen(filename, "r"))) {
+        return -1;
+      }
+
+      int rc = 0;
+      uint64_t line_num = 0;
+      ssize_t length;
+      Tokens tokens(hint_size);
+      while ((length = getline(&line_buffer_, &line_size_, file_handle_)) != -1) {
+        ++line_num;
+        // remove trailing "\r", "\n" or "\r\n"
+        if (line_buffer_[length - 1] == '\r' || line_buffer_[length - 1] == '\n') {
+          line_buffer_[--length] = '\0';
+          if (length && line_buffer_[length - 1] == '\r') {
+            line_buffer_[--length] = '\0';
+          }
+        }
+        tokens.splitString(line_buffer_, delim);
+        if (!tokens.numOfTokens() && skip_empty) {
+          continue;
+        }
+        if ((rc = (*fn)(filename, line_num, &tokens, fn_arg))) {
+          break;
+        }
+      }
+      fclose(file_handle_);
+      file_handle_ = NULL;
+      return rc;
+    }
+  }; /* class TextFileParser */
+
 } /* namespace nebula */
 
 #endif /* _BrianZ_NEBULA_TEXT_FILE_PARSER_H_ */
