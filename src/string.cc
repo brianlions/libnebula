@@ -131,4 +131,46 @@ namespace nebula
     }
     return input;
   }
-}
+
+  char * String::strerror(int errnum, char * buf, size_t len)
+  {
+#if defined(_GNU_SOURCE)
+    return strerror_r(errnum, buf, len);
+#elif (defined(_POSIX_C_SOURCE) && _POSIX_C_SOURCE >= 200112l) || (defined(_XOPEN_SOURCE) && _XOPEN_SOURCE >= 600)
+    if (strerror_r(errnum, buf, len) < 0) {
+      switch(len) {
+        case 0: {
+          break;
+        }
+        case 1: {
+          buf[0] = '\0';
+          break;
+        }
+        default: {
+          buf[0] = '?';
+          buf[1] = '\0';
+          break;
+        }
+      }
+    }
+    return buf;
+#else
+    switch(len) {
+      case 0: {
+        break;
+      }
+      case 1: {
+        buf[0] = '\0';
+        break;
+      }
+      default: {
+        buf[0] = '?';
+        buf[1] = '\0';
+        break;
+      }
+    }
+    return buf;
+#endif
+  }
+
+} /* namespace nebula */

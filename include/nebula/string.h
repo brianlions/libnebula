@@ -48,6 +48,8 @@ namespace nebula
     static bool endsWith(const char * src_str, const char * suffix);
     static char * toUpperCase(char * input);
     static char * toLowerCase(char * input);
+
+    static char * strerror(int errnum, char * buf, size_t buflen);
   };
 }
 

@@ -29,6 +29,7 @@
 
 #include <pthread.h>
 #include <string.h>
+#include <signal.h>
 
 namespace nebula
 {

@@ -24,8 +24,17 @@
  * along with libnebula.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+//#ifndef USE_PRETTY_MESSAGE
+//#define USE_PRETTY_MESSAGE
+//#endif
+#include <stdint.h>
+#include <vector>
+#include <iostream>
 #include <gtest/gtest.h>
+#include "nebula/pretty_message.h"
 #include "nebula/app_logger.h"
+#include "nebula/thread.h"
+#include "nebula/time.h"
 
 namespace lm = nebula::LogModule;
 
@@ -46,7 +55,8 @@ protected:
 
 TEST_F(AppLoggerTS, caseDiskFile)
 {
-  lm::internal::FileHandle fh(".", "foo", 5);
+  lm::internal::FileHandle fh;
+  fh.setConfig(".", "foo", 5);
   char buf[100];
   int len;
   for (int i = 0; i < 23; ++i) {
@@ -60,7 +70,8 @@ TEST_F(AppLoggerTS, caseDiskFile)
 
 TEST_F(AppLoggerTS, caseDevTty)
 {
-  lm::internal::FileHandle fh(NULL);
+  lm::internal::FileHandle fh;
+  fh.setConfig();
   char buf[100];
   int len;
   for (int i = 0; i < 20; ++i) {
@@ -69,5 +80,81 @@ TEST_F(AppLoggerTS, caseDevTty)
     if (i % 10 == 9) {
       fh.switchFile();
     }
+  }
+}
+
+//---------------------------------------------------------------------------------------------------------------------
+
+static const uint32_t num_messages = 100;
+static const uint32_t wait_interval_ms = 10;
+static const uint32_t num_workers = 10;
+
+class AppLoggerTS2: public testing::Test
+{
+protected:
+  //  lm::LogServer * uniq_instance_;
+
+  virtual void SetUp()
+  {
+    lm::startLogServer(".", "testsuite_app_logger_2", 1);
+  }
+
+  virtual void TearDown()
+  {
+    lm::stopLogServer();
+  }
+};
+
+class MessageGenerator: public nebula::Thread
+{
+private:
+  int my_id_;
+  lm::LogLevel::Constants log_level_;
+  lm::LogHandle * log_handle_;
+
+public:
+  MessageGenerator(int worker_id, lm::LogLevel::Constants level) :
+    my_id_(worker_id), log_level_(level), log_handle_(NULL)
+  {
+
+  }
+
+  ~MessageGenerator()
+  {
+    if (log_handle_) {
+      delete log_handle_;
+    }
+  }
+
+  virtual void * routine()
+  {
+    char identity[64];
+    snprintf(identity, sizeof(identity), "worker%02d", my_id_);
+    DEV_MESSAGE("identity: `%s'", identity);
+    if (!(log_handle_ = lm::getLogHandle(identity, log_level_))) {
+      return (void *) errno;
+    }
+    for (uint32_t i = 0; i < num_messages; ++i) {
+      APPLOG_DEBUG(log_handle_, "message %u of %u", (i + 1), num_messages);
+      APPLOG_INFO(log_handle_, "message %u of %u", (i + 1), num_messages);
+      APPLOG_NOTICE(log_handle_, "message %u of %u", (i + 1), num_messages);
+      nebula::Time::msSleep(wait_interval_ms);
+    }
+    return (void *) 0;
+  }
+};
+
+TEST_F(AppLoggerTS2, caseLogServerAndClients)
+{
+  std::vector<MessageGenerator *> workers;
+  for (uint32_t i = 0; i < num_workers; ++i) {
+    MessageGenerator * worker = new MessageGenerator(i + 1, (i % 2 == 0) ? lm::LogLevel::DEBUG : lm::LogLevel::INFO);
+    worker->create();
+    workers.push_back(worker);
+  }
+  for (size_t i = 0; i < workers.size(); ++i) {
+    workers[i]->join();
+    std::cout << "worker " << (i + 1) << " of " << workers.size() << " terminated." << std::endl;
+    delete workers[i];
   }
 }
