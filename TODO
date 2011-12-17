@@ -3,19 +3,20 @@ basic
  - string error message
  - async event
  - async io
- - thread
  - daemonize
  - app log class
- - directory traverse
- - text file parsing
  - command line parsing
  - real time param modification
  - monitoring or statistics
  - increase/decrease time speed
- - pseudo random number generator
  - progress or status save/restore (sqlite)
- - producer/comsumer threads
 
+ * endian
+ * thread
+ * directory traverse
+ * text file parsing
+ * pseudo random number generator
+ * producer/comsumer threads
 
 data structure
 

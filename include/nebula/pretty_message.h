@@ -34,13 +34,13 @@
 #define PRETTY_MESSAGE(stream, fmt, ...) \
 do { \
     char time_str[64]; \
-    (void) fprintf((stream), "[%s %s:%d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
+    (void) fprintf((stream), "[%s %s:%04d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
       __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__); \
 } while (0)
 #define DEV_MESSAGE(fmt, ...) \
 do { \
     char time_str[64]; \
-    (void) fprintf(stderr, "[%s %s:%d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
+    (void) fprintf(stderr, "[%s %s:%04d:%s] " fmt "\n", nebula::Time::strTimestamp(time_str, sizeof(time_str)), \
       __FILE__, __LINE__, __FUNCTION__, ## __VA_ARGS__); \
 } while (0)
 #if 0
