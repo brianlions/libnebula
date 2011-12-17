@@ -147,7 +147,7 @@ int compute(const char * filename, uint64_t num, const Tokens * tokens, void * d
   }
   else if (tokens->numOfTokens() == 1) {
     if (!strcasecmp(tokens->token(0), "done")) {
-      EXPECT_EQ(num, 6);
+      EXPECT_EQ(num, (uint64_t) 6);
       return 1;
     }
   }
