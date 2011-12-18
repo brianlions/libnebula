@@ -31,6 +31,7 @@
 #include <sys/epoll.h>
 #include <sys/time.h>
 #include <stdint.h>
+#include <string.h>
 #include "nebula/attributes.h"
 #include "nebula/pretty_message.h"
 
