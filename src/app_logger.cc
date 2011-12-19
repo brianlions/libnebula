@@ -140,7 +140,7 @@ namespace nebula
       int delta;
       Time::strTimestamp(timestamp, sizeof(timestamp));
       if ((len = snprintf(buffer_, buffer_size_, //
-        "[%s <%s> %s] ", timestamp, LogLevel::toString(level, true), identity_)) < 0) {
+        "[%s %s %s]\t", timestamp, LogLevel::toString(level, true), identity_)) < 0) {
         return -1;
       }
       va_list ap;
@@ -172,7 +172,7 @@ namespace nebula
       int delta;
       Time::strTimestamp(timestamp, sizeof(timestamp));
       if ((len = snprintf(buffer, sizeof(buffer), //
-        "[%s <%s> LogServer] ", timestamp, LogLevel::toString(level, true))) < 0) {
+        "[%s %s LogServer] ", timestamp, LogLevel::toString(level, true))) < 0) {
         return -1;
       }
       va_list ap;
