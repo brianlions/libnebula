@@ -26,6 +26,7 @@
 
 #include <string.h>
 #include "nebula/async_io.h"
+#include "nebula/string.h"
 
 namespace nebula
 {
@@ -114,7 +115,7 @@ namespace nebula
 #ifdef SOMAXCONN
       SOMAXCONN
 #else
-        64
+      64
 #endif
         ) < 0) {
       close(fd);
@@ -142,9 +143,57 @@ namespace nebula
       return ERROR;
     }
     if (use_tcp && connect(fd, (const struct sockaddr *) serv_addr, sizeof(*serv_addr)) < 0) {
+      close(fd);
       return ERROR;
     }
     if (setNonblock(fd) == ERROR) {
+      close(fd);
+      return ERROR;
+    }
+    return fd;
+  }
+
+  int AsyncIo::createAsyncUnixServerSocket(const char * fs_pathname, int use_tcp)
+  {
+    struct sockaddr_un serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sun_family = AF_UNIX;
+    if (String::strlcpy(serv_addr.sun_path, fs_pathname, sizeof(serv_addr.sun_path)) >= sizeof(serv_addr.sun_path)) {
+      return ERROR;
+    }
+    int fd;
+    if ((fd = socket(AF_UNIX, use_tcp ? SOCK_STREAM : SOCK_DGRAM, 0)) < 0) {
+      return ERROR;
+    }
+    if (setNonblock(fd) == ERROR) {
+      close(fd);
+      return ERROR;
+    }
+    if (bind(fd, (struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+      close(fd);
+      return ERROR;
+    }
+    return fd;
+  }
+
+  int AsyncIo::createAsyncUnixClientSocket(const char * fs_pathname, int use_tcp)
+  {
+    struct sockaddr_un serv_addr;
+    memset(&serv_addr, 0, sizeof(serv_addr));
+    serv_addr.sun_family = AF_UNIX;
+    if (String::strlcpy(serv_addr.sun_path, fs_pathname, sizeof(serv_addr.sun_path)) >= sizeof(serv_addr.sun_path)) {
+      return ERROR;
+    }
+    int fd;
+    if ((fd = socket(AF_UNIX, use_tcp ? SOCK_STREAM : SOCK_DGRAM, 0)) < 0) {
+      return ERROR;
+    }
+    if (setNonblock(fd) == ERROR) {
+      close(fd);
+      return ERROR;
+    }
+    if (connect(fd, (const struct sockaddr *) &serv_addr, sizeof(serv_addr)) < 0) {
+      close(fd);
       return ERROR;
     }
     return fd;

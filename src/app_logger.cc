@@ -24,6 +24,7 @@
  * along with libnebula.  If not, see <http://www.gnu.org/licenses/>.
  */
 
+#include "nebula/async_io.h"
 #include "nebula/app_logger.h"
 
 namespace nebula

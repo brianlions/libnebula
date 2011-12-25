@@ -32,6 +32,7 @@
 #include <fcntl.h>
 #include <sys/types.h>
 #include <sys/socket.h>
+#include <sys/un.h>
 #include <arpa/inet.h>
 #include <netinet/in.h>
 #include <netinet/tcp.h>
@@ -197,6 +198,26 @@ namespace nebula
       return createAsyncClientSocket(serv_addr, 0);
     }
 
+    static int unixTcpServer(const char * fs_pathname)
+    {
+      return createAsyncUnixServerSocket(fs_pathname, 1);
+    }
+
+    static int unixUdpServer(const char * fs_pathname)
+    {
+      return createAsyncUnixServerSocket(fs_pathname, 0);
+    }
+
+    static int unixTcpClient(const char * fs_pathname)
+    {
+      return createAsyncUnixClientSocket(fs_pathname, 1);
+    }
+
+    static int unixUdpClient(const char * fs_pathname)
+    {
+      return createAsyncUnixClientSocket(fs_pathname, 0);
+    }
+
   private:
     AsyncIo();
     ~AsyncIo();
@@ -204,6 +225,8 @@ namespace nebula
     static int createAsyncServerSocket(const struct sockaddr_in * bind_addr, int use_tcp);
     static int createAsyncClientSocket(const char * serv_ip, int serv_port, int use_tcp);
     static int createAsyncClientSocket(const struct sockaddr_in * serv_addr, int use_tcp);
+    static int createAsyncUnixServerSocket(const char * fs_pathname, int use_tcp);
+    static int createAsyncUnixClientSocket(const char * fs_pathname, int use_tcp);
   };
 }
 
