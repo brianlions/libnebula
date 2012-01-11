@@ -40,7 +40,17 @@ namespace nebula
   class Time
   {
   public:
-    static char * formatDataTime(char * buf, size_t buflen, const char * format, const time_t * pt = NULL,
+    /*
+     * Description:
+     *   Use strftime() to formats the epoch timestamp `*pt' according to the
+     *   specification `format', and places the result in the char array `buf'
+     *   of size `buflen'.  If `pt' is NULL, use the current timestamp.  The
+     *   string placed in array `buf' will be expressed relative to the
+     *   system's timezone unless `utc' is set to true.
+     * Return value:
+     *   Start of the result array.
+     */
+    static char * formatEpochTime(char * buf, size_t buflen, const char * format, const time_t * pt = NULL,
       bool utc = false) STRFTIME_FORMAT(3)
     {
       struct tm broken_down;
@@ -54,7 +64,18 @@ namespace nebula
       return buf;
     }
 
-    static char * fromTimestamp(char * buf, size_t buflen, const time_t * pt = NULL, bool utc = false)
+    /*
+     * Description:
+     *   Use strftime() to formats the epoch timestamp `*pt' to a readable
+     *   string and place it in the char array `buf' of size `buflen'.  If
+     *   `pt' is NULL, use the current timestamp.  The result will be
+     *   expressed relative to the system's timezone unless `utc' is set to
+     *   true.
+     *   Format of the result string is "%Y.%m.%d-%H:%M:%S-%Z".
+     * Return value:
+     *   Start of the result array.
+     */
+    static char * strEpochTime(char * buf, size_t buflen, const time_t * pt = NULL, bool utc = false)
     {
       struct tm broken_down;
       time_t now;
@@ -84,6 +105,11 @@ namespace nebula
       return buf;
     }
 
+    /*
+     * Description:
+     *   Converts timestamp `ptv' into milliseconds since the Epoch, or number
+     *   of milliseconds since the Epoch if `ptv' is NULL.
+     */
     static int64_t msTimestamp(const struct timeval * ptv = NULL)
     {
       struct timeval now;
@@ -94,6 +120,11 @@ namespace nebula
       return static_cast<int64_t> (ptv->tv_sec * 1000 + ptv->tv_usec / 1000);
     }
 
+    /*
+     * Description:
+     *   Converts timestamp `ptv' into microseconds since the Epoch, or number
+     *   of microseconds since the Epoch if `ptv' is NULL.
+     */
     static int64_t usTimestamp(const struct timeval * ptv = NULL)
     {
       struct timeval now;
@@ -104,6 +135,15 @@ namespace nebula
       return static_cast<int64_t> (ptv->tv_sec * 1000000 + ptv->tv_usec);
     }
 
+    /*
+     * Description:
+     *   Suspend until either `interval' milliseconds has elapsed, or the
+     *   delivery of a signal.  If interrupted by a signal, the remaining time
+     *   will be written into `remain' unless `remain' is NULL.
+     * Return value:
+     *   0 if successfully sleeping for the requested interval
+     *   -1 if interrupted by a signal handler or encounters an error.
+     */
     static int msSleep(unsigned int interval, unsigned int * remain = NULL)
     {
       struct timespec intv, rem;

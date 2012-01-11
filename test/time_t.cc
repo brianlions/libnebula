@@ -50,8 +50,8 @@ TEST_F(TSTime, caseFormatDataTime)
 {
   time_t t = 0;
   char buf[128];
-  std::cout << "epoch: " << Time::formatDataTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX", &t) << std::endl;
-  std::cout << "now:   " << Time::formatDataTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX") << std::endl;
+  std::cout << "epoch: " << Time::formatEpochTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX", &t) << std::endl;
+  std::cout << "now:   " << Time::formatEpochTime(buf, sizeof(buf), "%Y.%m.%d.%H.%M.%S.XXXXXX") << std::endl;
 }
 
 TEST_F(TSTime, caseTimestampStr)
@@ -61,12 +61,12 @@ TEST_F(TSTime, caseTimestampStr)
   { 0, 0 };
   std::cout << "epoch: " << Time::strTimestamp(buf, sizeof(buf), &epoch, false) << std::endl;
   std::cout << "epoch: " << Time::strTimestamp(buf, sizeof(buf), &epoch, true) << std::endl;
-  std::cout << "epoch: " << Time::fromTimestamp(buf, sizeof(buf), &(epoch.tv_sec), false) << std::endl;
-  std::cout << "epoch: " << Time::fromTimestamp(buf, sizeof(buf), &(epoch.tv_sec), true) << std::endl;
+  std::cout << "epoch: " << Time::strEpochTime(buf, sizeof(buf), &(epoch.tv_sec), false) << std::endl;
+  std::cout << "epoch: " << Time::strEpochTime(buf, sizeof(buf), &(epoch.tv_sec), true) << std::endl;
   std::cout << "now:   " << Time::strTimestamp(buf, sizeof(buf), NULL, false) << std::endl;
   std::cout << "now:   " << Time::strTimestamp(buf, sizeof(buf), NULL, true) << std::endl;
-  std::cout << "now:   " << Time::fromTimestamp(buf, sizeof(buf), NULL, false) << std::endl;
-  std::cout << "now:   " << Time::fromTimestamp(buf, sizeof(buf), NULL, true) << std::endl;
+  std::cout << "now:   " << Time::strEpochTime(buf, sizeof(buf), NULL, false) << std::endl;
+  std::cout << "now:   " << Time::strEpochTime(buf, sizeof(buf), NULL, true) << std::endl;
 }
 
 TEST_F(TSTime, caseTimeMs)

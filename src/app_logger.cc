@@ -66,7 +66,7 @@ namespace nebula
           String::strlcat(format_, "_%Y.%m.%d.%H.%M.%S_XXXXXX", sizeof(format_));
           DEV_MESSAGE("basename template: `%s'", format_);
           char basename[NAME_MAX + 1];
-          Time::formatDataTime(basename, sizeof(basename), format_);
+          Time::formatEpochTime(basename, sizeof(basename), format_);
           String::strlcat(log_file_, basename, sizeof(log_file_));
           DEV_MESSAGE("realpath template: `%s'", log_file_);
         }
@@ -94,7 +94,7 @@ namespace nebula
           fd_ = -1;
 
           char basename[NAME_MAX + 1];
-          Time::formatDataTime(basename, sizeof(basename), format_);
+          Time::formatEpochTime(basename, sizeof(basename), format_);
           String::strlcat(log_file_, basename, sizeof(log_file_));
           DEV_MESSAGE("realpath template: `%s'", log_file_);
           if ((fd_ = mkstemp(log_file_)) < 0) {
