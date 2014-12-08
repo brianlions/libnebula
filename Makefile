@@ -25,7 +25,7 @@ bin_dir            := $(root_dir)/bin
 test_dir           := $(root_dir)/test
 poc_dir            := $(root_dir)/poc
 
-include_paths      := $(inc_dir) $(src_dir) ~/local/include ~/lab/include /usr/local/include /opt/include
+include_paths      := $(inc_dir) $(src_dir) ~/local/include/google ~/local/include ~/lab/include /usr/local/include /opt/include
 library_paths      := $(bin_dir) ~/local/lib ~/lab/lib /usr/local/lib /opt/lib
 libraries          := rt pthread gtest
 

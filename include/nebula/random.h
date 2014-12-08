@@ -61,20 +61,21 @@ namespace nebula
 
     uint32_t randomU32()
     {
-      uint32_t r;
+      uint32_t r, r2;
+      // XXX random_r generate 31 bits integer
       random_r(&databuf_, (int32_t *) &r);
-      return ((r << 19) | (r >> 13));
+      random_r(&databuf_, (int32_t *) &r2);
+      return ((r << 19) | (r2 >> 12));
     }
 
     uint64_t randomU64()
     {
-      int32_t a, b;
-      random_r(&databuf_, &a);
-      random_r(&databuf_, &b);
-      uint64_t r = (uint32_t) a;
+      uint32_t a = randomU32();
+      uint32_t b = randomU32();
+      uint64_t r = a;
       r <<= 32;
-      r |= (uint32_t) b;
-      return ((r << 41) | (r >> 23));
+      r |= b;
+      return r;
     }
 
     int64_t randomI64()
